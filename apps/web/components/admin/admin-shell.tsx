@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
-  BookOpen,
+  GraduationCap,
   LogOut,
   Menu,
   PanelLeftClose,
@@ -64,7 +64,7 @@ function SidebarContent({
         )}
       >
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-gradient ring-1 ring-white/10">
-          <BookOpen className="h-4 w-4 text-white" />
+          <GraduationCap className="h-4 w-4 text-white" />
         </div>
         <div
           aria-hidden={compact}

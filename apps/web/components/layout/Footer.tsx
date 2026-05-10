@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -9,7 +9,7 @@ export default function Footer() {
           <div className="max-w-sm">
             <Link href="/" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-hero">
-                <BookOpen className="h-4 w-4 text-primary-foreground" />
+                <GraduationCap className="h-4 w-4 text-primary-foreground" />
               </div>
               <span className="font-display text-lg font-bold">EduPath</span>
             </Link>

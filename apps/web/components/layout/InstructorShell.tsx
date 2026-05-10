@@ -151,7 +151,7 @@ export default function InstructorShell({ children }: PropsWithChildren) {
               )}
             >
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/[0.08] ring-1 ring-white/10">
-                <BookOpen className="h-5 w-5" />
+                <GraduationCap className="h-5 w-5" />
               </div>
               <div
                 className={cn(
@@ -317,7 +317,7 @@ export default function InstructorShell({ children }: PropsWithChildren) {
               className="flex items-center gap-2 md:hidden"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#1c1d1f]">
-                <BookOpen className="h-4 w-4 text-white" />
+                <GraduationCap className="h-4 w-4 text-white" />
               </div>
               <span className="font-display font-semibold">EduPath</span>
             </Link>
