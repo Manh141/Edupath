@@ -65,7 +65,7 @@ playwright-report/
 
 
 # Local volumes / data
-data/
+/data/
 volumes/
 .local/
 *.local/
