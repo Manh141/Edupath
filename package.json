@@ -15,7 +15,8 @@
     "down:infra": "docker compose -f infra/docker/docker-compose.yml down",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
-    "build": "pnpm -r build",
+    "build": "node scripts/build.mjs",
+    "build:all": "pnpm -r build",
     "prepare": "husky"
   },
   "devDependencies": {
