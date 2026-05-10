@@ -1,0 +1,187 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 17% 98%;
+    --foreground: 211 29% 36%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 211 29% 36%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 211 29% 36%;
+
+    --primary: 215 37% 17%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 215 37% 17%;
+
+    --muted: 210 20% 96%;
+    --muted-foreground: 211 24% 46%;
+
+    --accent: 30 100% 48%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 18% 88%;
+    --input: 214 18% 88%;
+    --ring: 30 100% 48%;
+
+    --radius: 1rem;
+
+    --brand: 215 37% 17%;
+    --body: 211 29% 36%;
+    --cta: 30 100% 48%;
+    --surface: 210 17% 98%;
+    --surface-strong: 0 0% 100%;
+    --success: 145 63% 42%;
+    --warning: 37 92% 50%;
+
+    --shadow-card: 0 10px 30px -16px rgb(27 38 59 / 0.18);
+    --shadow-soft: 0 18px 60px -24px rgb(27 38 59 / 0.16);
+
+    --sidebar-background: 215 37% 17%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 30 100% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 31% 24%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 215 28% 25%;
+    --sidebar-ring: 30 100% 48%;
+  }
+
+  .dark {
+    --background: 220 25% 10%;
+    --foreground: 210 20% 92%;
+    --card: 220 24% 13%;
+    --card-foreground: 210 20% 92%;
+    --popover: 220 24% 13%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 210 20% 96%;
+    --primary-foreground: 215 37% 17%;
+    --secondary: 215 20% 18%;
+    --secondary-foreground: 210 20% 92%;
+    --muted: 215 20% 18%;
+    --muted-foreground: 214 12% 70%;
+    --accent: 30 100% 48%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 19% 22%;
+    --input: 215 19% 22%;
+    --ring: 30 100% 48%;
+    --sidebar-background: 220 25% 10%;
+    --sidebar-foreground: 210 20% 92%;
+    --sidebar-primary: 30 100% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 20% 18%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 215 19% 22%;
+    --sidebar-ring: 30 100% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    min-height: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Montserrat', sans-serif;
+    color: hsl(var(--brand));
+  }
+}
+
+@layer components {
+  .app-shell-surface {
+    @apply bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75;
+  }
+
+  .page-shell {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 xl:px-8;
+  }
+
+  .admin-card {
+    @apply rounded-xl border border-border bg-card text-card-foreground shadow-sm;
+  }
+
+  .admin-table-wrap {
+    @apply overflow-hidden rounded-xl border border-border bg-card shadow-sm;
+  }
+
+  .admin-muted-panel {
+    @apply rounded-xl border border-border bg-secondary/60;
+  }
+
+  .admin-kpi-card {
+    @apply rounded-xl border border-border bg-card p-5 shadow-sm;
+  }
+}
+
+@layer utilities {
+  .font-heading {
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .font-body {
+    font-family: 'Inter', sans-serif;
+  }
+
+  .text-brand {
+    color: hsl(var(--brand));
+  }
+
+  .text-body {
+    color: hsl(var(--body));
+  }
+
+  .bg-cta {
+    background-color: hsl(var(--cta));
+  }
+
+  .text-cta {
+    color: hsl(var(--cta));
+  }
+
+  .shadow-card-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .bg-brand-gradient {
+    background-image: linear-gradient(135deg, #1b263b 0%, #24344d 55%, #314768 100%);
+  }
+
+  .bg-cta-gradient {
+    background-image: linear-gradient(135deg, #f77f00 0%, #ff9c33 100%);
+  }
+}

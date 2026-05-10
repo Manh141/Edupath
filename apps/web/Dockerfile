@@ -1,0 +1,52 @@
+FROM node:22-alpine AS base
+ARG PNPM_VERSION=10.32.1
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN apk add --no-cache libc6-compat openssl \
+  && corepack enable \
+  && for attempt in 1 2 3; do corepack prepare "pnpm@${PNPM_VERSION}" --activate && break; if [ "$attempt" = "3" ]; then exit 1; fi; sleep 5; done
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json pnpm-lock.yaml* ./
+RUN for attempt in 1 2 3; do pnpm install --no-frozen-lockfile && break; if [ "$attempt" = "3" ]; then exit 1; fi; sleep 5; done
+
+FROM deps AS development
+ENV NODE_ENV=development
+COPY . .
+EXPOSE 3006
+CMD ["pnpm", "dev"]
+
+FROM deps AS build
+ENV NODE_ENV=production
+ARG NEXT_PUBLIC_API_URL=http://api-gateway:3000
+ARG NEXT_INTERNAL_API_BASE_URL=http://api-gateway:3000
+ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+ARG NEXT_PUBLIC_AUTH_BASE_URL=http://localhost:3000/api/auth
+ARG NEXT_PUBLIC_GATEWAY_BASE_URL=http://localhost:3000/gateway
+ARG NEXT_PUBLIC_COMMUNICATION_WS_URL=http://localhost:3007
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_INTERNAL_API_BASE_URL=${NEXT_INTERNAL_API_BASE_URL}
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+ENV NEXT_PUBLIC_AUTH_BASE_URL=${NEXT_PUBLIC_AUTH_BASE_URL}
+ENV NEXT_PUBLIC_GATEWAY_BASE_URL=${NEXT_PUBLIC_GATEWAY_BASE_URL}
+ENV NEXT_PUBLIC_COMMUNICATION_WS_URL=${NEXT_PUBLIC_COMMUNICATION_WS_URL}
+COPY . .
+RUN pnpm build
+
+FROM base AS runner
+ENV NODE_ENV=production
+ARG NEXT_PUBLIC_API_URL=http://api-gateway:3000
+ARG NEXT_INTERNAL_API_BASE_URL=http://api-gateway:3000
+ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+ARG NEXT_PUBLIC_AUTH_BASE_URL=http://localhost:3000/api/auth
+ARG NEXT_PUBLIC_GATEWAY_BASE_URL=http://localhost:3000/gateway
+ARG NEXT_PUBLIC_COMMUNICATION_WS_URL=http://localhost:3007
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_INTERNAL_API_BASE_URL=${NEXT_INTERNAL_API_BASE_URL}
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+ENV NEXT_PUBLIC_AUTH_BASE_URL=${NEXT_PUBLIC_AUTH_BASE_URL}
+ENV NEXT_PUBLIC_GATEWAY_BASE_URL=${NEXT_PUBLIC_GATEWAY_BASE_URL}
+ENV NEXT_PUBLIC_COMMUNICATION_WS_URL=${NEXT_PUBLIC_COMMUNICATION_WS_URL}
+COPY --from=build /app ./
+EXPOSE 3006
+CMD ["pnpm", "start"]
