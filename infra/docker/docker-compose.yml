@@ -1,0 +1,339 @@
+services:
+  postgres-auth:
+    image: postgres:16
+    restart: unless-stopped
+    env_file:
+      - ./env/postgres-auth.env
+    ports:
+      - "${PG_AUTH_PORT:-5433}:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - edupath
+
+  postgres-user:
+    image: postgres:16
+    restart: unless-stopped
+    env_file:
+      - ./env/postgres-user.env
+    ports:
+      - "${PG_USER_PORT:-5434}:5432"
+    volumes:
+      - postgres_user_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - edupath
+
+  postgres-course:
+    image: postgres:16
+    restart: unless-stopped
+    env_file:
+      - ./env/postgres-course.env
+    ports:
+      - "${PG_COURSE_PORT:-5435}:5432"
+    volumes:
+      - postgres_course_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - edupath
+
+  postgres-enrollment:
+    image: postgres:16
+    restart: unless-stopped
+    env_file:
+      - ./env/postgres-enrollment.env
+    ports:
+      - "${PG_ENROLLMENT_PORT:-5436}:5432"
+    volumes:
+      - postgres_enrollment_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - edupath
+
+  postgres-payment:
+    image: postgres:16
+    restart: unless-stopped
+    env_file:
+      - ./env/postgres-payment.env
+    ports:
+      - "${PG_PAYMENT_PORT:-5437}:5432"
+    volumes:
+      - postgres_payment_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - edupath
+
+  postgres-communication:
+    image: postgres:16
+    restart: unless-stopped
+    env_file:
+      - ./env/postgres-communication.env
+    ports:
+      - "${PG_COMMUNICATION_PORT:-5438}:5432"
+    volumes:
+      - postgres_communication_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - edupath
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    networks:
+      - edupath
+
+  minio:
+    image: minio/minio
+    restart: unless-stopped
+    command: server /data --console-address ':9001'
+    env_file:
+      - ./env/minio.env
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - edupath
+
+  mailhog:
+    image: mailhog/mailhog
+    restart: unless-stopped
+    ports:
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${MAILHOG_UI_PORT:-8025}:8025"
+    networks:
+      - edupath
+
+  auth-service:
+    build:
+      context: ../../services/auth_service
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    env_file:
+      - ./env/auth-service.env
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      mailhog:
+        condition: service_started
+    ports:
+      - "${AUTH_SERVICE_PORT:-3001}:3001"
+    networks:
+      - edupath
+
+  user-service:
+    build:
+      context: ../../services/user_service
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    env_file:
+      - ./env/user-service.env
+    depends_on:
+      postgres-user:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    ports:
+      - "${USER_SERVICE_PORT:-3002}:3002"
+    networks:
+      - edupath
+
+  course-service:
+    build:
+      context: ../../services/course_service
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    env_file:
+      - ./env/course-service.env
+    depends_on:
+      postgres-course:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    ports:
+      - "${COURSE_SERVICE_PORT:-3003}:3003"
+    networks:
+      - edupath
+
+  enrollment-service:
+    build:
+      context: ../../services/enrollment_service
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    env_file:
+      - ./env/enrollment-service.env
+    depends_on:
+      postgres-enrollment:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${ENROLLMENT_SERVICE_PORT:-3004}:3004"
+    networks:
+      - edupath
+
+  payment-service:
+    build:
+      context: ../../services/payment_service
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    env_file:
+      - ./env/payment-service.env
+    depends_on:
+      postgres-payment:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    ports:
+      - "${PAYMENT_SERVICE_PORT:-3005}:3005"
+    networks:
+      - edupath
+
+  communication-service:
+    build:
+      context: ../../services/communication_service
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    env_file:
+      - ./env/communication-service.env
+    depends_on:
+      postgres-communication:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${COMMUNICATION_SERVICE_PORT:-3007}:3007"
+    networks:
+      - edupath
+
+  api-gateway:
+    build:
+      context: ../../services/api_gateway
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    env_file:
+      - ./env/api-gateway.env
+    depends_on:
+      auth-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      course-service:
+        condition: service_started
+      enrollment-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      communication-service:
+        condition: service_started
+    ports:
+      - "${API_GATEWAY_PORT:-3000}:3000"
+    networks:
+      - edupath
+
+  web:
+    build:
+      context: ../../apps/web
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api-gateway:3000}
+        NEXT_INTERNAL_API_BASE_URL: ${NEXT_INTERNAL_API_BASE_URL:-http://api-gateway:3000}
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3000}
+        NEXT_PUBLIC_AUTH_BASE_URL: ${NEXT_PUBLIC_AUTH_BASE_URL:-http://localhost:3000/api/auth}
+        NEXT_PUBLIC_GATEWAY_BASE_URL: ${NEXT_PUBLIC_GATEWAY_BASE_URL:-http://localhost:3000/gateway}
+        NEXT_PUBLIC_COMMUNICATION_WS_URL: ${NEXT_PUBLIC_COMMUNICATION_WS_URL:-http://localhost:3007}
+    restart: unless-stopped
+    env_file:
+      - ./env/web.env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      api-gateway:
+        condition: service_started
+    ports:
+      - "${WEB_PORT:-3006}:3006"
+    networks:
+      - edupath
+
+networks:
+  edupath:
+    driver: bridge
+
+volumes:
+  postgres_auth_data:
+    name: edupath_postgres_auth_data
+  postgres_user_data:
+    name: edupath_postgres_user_data
+  postgres_course_data:
+    name: edupath_postgres_course_data
+  postgres_enrollment_data:
+    name: edupath_postgres_enrollment_data
+  postgres_payment_data:
+    name: edupath_postgres_payment_data
+  postgres_communication_data:
+    name: edupath_postgres_communication_data
+  redis_data:
+    name: edupath_redis_data
+  minio_data:
+    name: edupath_minio_data

@@ -1,0 +1,431 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CourseLevel {
+  Beginner
+  Intermediate
+  Advanced
+  AllLevels
+}
+
+enum CourseStatus {
+  draft
+  in_progress
+  pending_review
+  changes_requested
+  approved
+  published
+  rejected
+  archived
+}
+
+enum CourseReviewSubmissionStatus {
+  pending
+  in_review
+  approved
+  changes_requested
+  rejected
+  superseded
+}
+
+enum CourseStatusActorType {
+  instructor
+  admin
+  system
+}
+
+enum CourseAssetType {
+  thumbnail
+  promo_video
+  lecture_video
+  lecture_resource
+}
+
+enum CourseAssetStatus {
+  uploaded
+  processing
+  ready
+  failed
+  deleted
+}
+
+enum LectureType {
+  video
+  article
+  resource
+}
+
+enum CoursePricingTier {
+  free
+  tier_99k
+  tier_199k
+  tier_299k
+  tier_499k
+  tier_799k
+  tier_1299k
+  tier_1999k
+  custom
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  description   String        @default("")
+  subcategories Subcategory[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Subcategory {
+  id          String    @id @default(cuid())
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  name        String
+  slug        String    @unique
+  description String    @default("")
+  courses     Course[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([categoryId])
+}
+
+model Course {
+  id                String                 @id @default(cuid())
+  title             String
+  slug              String                 @unique
+  subtitle          String                 @default("")
+  shortDescription  String                 @default("")
+  description       String                 @default("")
+
+  subcategoryId     String?
+  subcategory       Subcategory?           @relation(fields: [subcategoryId], references: [id], onDelete: Restrict)
+
+  thumbnailUrl      String                 @default("")
+  trailerUrl        String                 @default("")
+  language          String                 @default("vi")
+  subtitleLanguages String[]               @default([])
+  level             CourseLevel            @default(Beginner)
+  status            CourseStatus           @default(draft)
+
+  price             Int                    @default(0)
+  compareAtPrice    Int?
+  currency          String                 @default("VND")
+
+  publishedAt       DateTime?
+  approvedAt        DateTime?
+  submittedAt       DateTime?
+  rejectedReason    String?
+  changesRequested  String?
+
+  createdBy         String?
+  updatedBy         String?
+
+  averageRating     Float                  @default(0)
+  totalReviews      Int                    @default(0)
+  totalStudents     Int                    @default(0)
+  totalDurationSec  Int                    @default(0)
+
+  deletedAt         DateTime?
+
+  instructors       CourseInstructor[]
+  sections          Section[]
+  assets            CourseAsset[]
+  objectives        CourseObjective[]
+  requirements      CourseRequirement[]
+  targetAudiences   CourseTargetAudience[]
+  faqs              CourseFAQ[]
+  message           CourseMessage?
+  pricingConfig     CoursePricing?
+  reviews           CourseReview[]
+  reviewSubmissions CourseReviewSubmission[]
+  statusHistory     CourseStatusHistory[]
+
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  @@index([subcategoryId])
+  @@index([level])
+  @@index([status, createdAt])
+  @@index([subcategoryId, status])
+  @@index([publishedAt])
+  @@index([deletedAt])
+}
+
+model CourseAsset {
+  id              String            @id @default(cuid())
+  courseId        String
+  course          Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  type            CourseAssetType
+  status          CourseAssetStatus @default(ready)
+
+  storageProvider String            @default("s3")
+  bucket          String?
+  storageKey      String
+  publicUrl       String
+  originalName    String            @default("")
+  mimeType        String            @default("")
+  sizeBytes       Int?
+  durationSec     Int?
+  width           Int?
+  height          Int?
+
+  createdBy       String?
+  updatedBy       String?
+  deletedAt       DateTime?
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([courseId, type, status])
+  @@index([storageKey])
+  @@index([deletedAt])
+}
+
+model CourseInstructor {
+  id            String   @id @default(cuid())
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  instructorId  String
+  displayName   String
+  avatarUrl     String   @default("")
+  bio           String   @default("")
+  isPrimary     Boolean  @default(false)
+
+  createdAt     DateTime @default(now())
+
+  @@unique([courseId, instructorId])
+  @@index([courseId])
+  @@index([instructorId])
+}
+
+model Section {
+  id          String    @id @default(cuid())
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String    @default("")
+  order       Int       @default(0)
+  lectures    Lecture[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([courseId, order])
+  @@index([courseId])
+}
+
+model Lecture {
+  id             String        @id @default(cuid())
+  sectionId      String
+  section        Section       @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  title          String
+  slug           String
+  description    String        @default("")
+  type           LectureType   @default(video)
+
+  videoUrl       String        @default("")
+  articleContent String        @default("")
+  transcript     String        @default("")
+  durationSec    Int           @default(0)
+
+  isPreview      Boolean       @default(false)
+  isPublished    Boolean       @default(true)
+  order          Int           @default(0)
+
+  assets         LectureAsset[]
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([sectionId, slug])
+  @@unique([sectionId, order])
+  @@index([sectionId])
+}
+
+model LectureAsset {
+  id              String            @id @default(cuid())
+  lectureId       String
+  lecture         Lecture           @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+
+  name            String
+  fileUrl         String
+  fileType        String
+  fileSize        Int?
+
+  storageProvider String            @default("external")
+  bucket          String?
+  storageKey      String?
+  mimeType        String            @default("")
+  durationSec     Int?
+  status          CourseAssetStatus @default(ready)
+  createdBy       String?
+  deletedAt       DateTime?
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([lectureId])
+  @@index([storageKey])
+  @@index([deletedAt])
+}
+
+model CourseObjective {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  content   String
+  order     Int      @default(0)
+
+  @@unique([courseId, order])
+  @@index([courseId])
+}
+
+model CourseRequirement {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  content   String
+  order     Int      @default(0)
+
+  @@unique([courseId, order])
+  @@index([courseId])
+}
+
+model CourseTargetAudience {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  content   String
+  order     Int      @default(0)
+
+  @@unique([courseId, order])
+  @@index([courseId])
+}
+
+model CourseFAQ {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  question  String
+  answer    String
+  order     Int      @default(0)
+
+  @@unique([courseId, order])
+  @@index([courseId])
+}
+
+model CourseMessage {
+  id                     String   @id @default(cuid())
+  courseId               String   @unique
+  course                 Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  welcomeMessage         String   @default("")
+  congratulationsMessage String   @default("")
+
+  updatedAt              DateTime @updatedAt
+}
+
+model CourseReview {
+  id              String   @id @default(cuid())
+  courseId        String
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  userId          String
+  userDisplayName String
+  userAvatarUrl   String   @default("")
+  rating          Int
+  title           String   @default("")
+  comment         String   @default("")
+  isVisible       Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([courseId, userId])
+  @@index([courseId, createdAt])
+}
+
+model CourseReviewSubmission {
+  id              String                          @id @default(cuid())
+  courseId        String
+  course          Course                          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  version         Int                             @default(1)
+  status          CourseReviewSubmissionStatus    @default(pending)
+
+  submittedBy     String
+  submittedAt     DateTime                        @default(now())
+
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  decisionNote    String?
+
+  contentSnapshot Json
+  validationReport Json
+
+  createdAt       DateTime                        @default(now())
+  updatedAt       DateTime                        @updatedAt
+
+  @@unique([courseId, version])
+  @@index([courseId, status])
+  @@index([status, submittedAt])
+  @@index([submittedBy])
+}
+
+model CoursePricing {
+  id                   String             @id @default(cuid())
+  courseId             String             @unique
+  course               Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  tier                 CoursePricingTier  @default(free)
+  price                Int                @default(0)
+  compareAtPrice       Int?
+  currency             String             @default("VND")
+
+  eligibilityCheckedAt DateTime?
+  eligibilitySnapshot  Json?
+
+  updatedBy            String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([tier])
+}
+
+model CourseStatusHistory {
+  id          String                  @id @default(cuid())
+  courseId    String
+  course      Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  fromStatus  CourseStatus?
+  toStatus    CourseStatus
+  reason      String?
+  metadata    Json?
+
+  actorType   CourseStatusActorType
+  actorId     String?
+
+  createdAt   DateTime                @default(now())
+
+  @@index([courseId, createdAt])
+  @@index([toStatus])
+}

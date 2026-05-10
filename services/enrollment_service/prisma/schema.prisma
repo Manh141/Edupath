@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EnrollmentStatus {
+  active
+  completed
+  refunded
+  revoked
+}
+
+model Enrollment {
+  id                 String            @id @default(cuid())
+  userId             String
+  courseId           String
+  courseSlug         String            @default("")
+  courseTitle        String
+  courseThumbnailUrl String            @default("")
+  instructorName     String            @default("")
+  orderId            String?
+  status             EnrollmentStatus  @default(active)
+
+  enrolledAt         DateTime          @default(now())
+  completedAt        DateTime?
+  refundedAt         DateTime?
+  revokedAt          DateTime?
+  expiresAt          DateTime?
+
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  courseProgress     CourseProgress?
+  lectureProgresses  LectureProgress[]
+  certificate        Certificate?
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([status])
+  @@index([orderId])
+  @@index([userId, status])
+  @@index([userId, enrolledAt])
+}
+
+model CourseProgress {
+  id                String       @id @default(cuid())
+  enrollmentId      String       @unique
+  enrollment        Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  completedLectures Int          @default(0)
+  totalLectures     Int          @default(0)
+  progressPercent   Float        @default(0)
+  lastLectureId     String?
+  lastAccessedAt    DateTime?
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model LectureProgress {
+  id                String       @id @default(cuid())
+  enrollmentId      String
+  enrollment        Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  lectureId         String
+  isCompleted       Boolean      @default(false)
+  progressSec       Int          @default(0)
+  durationSec       Int          @default(0)
+  completedAt       DateTime?
+  lastViewedAt      DateTime?
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@unique([enrollmentId, lectureId])
+  @@index([enrollmentId])
+  @@index([lectureId])
+}
+
+model Wishlist {
+  id                 String      @id @default(cuid())
+  userId             String
+  courseId           String
+  courseSlug         String      @default("")
+  courseTitle        String
+  courseThumbnailUrl String      @default("")
+  createdAt          DateTime    @default(now())
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([userId, createdAt])
+}
+
+model Certificate {
+  id               String       @id @default(cuid())
+  enrollmentId     String       @unique
+  enrollment       Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  certificateCode  String       @unique
+  fileUrl          String       @default("")
+  issuedAt         DateTime     @default(now())
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}

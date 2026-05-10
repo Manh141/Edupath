@@ -1,0 +1,16 @@
+# Pre-commit hook — minimal placeholder.
+#
+# TODO: replace with proper checks once baselines are clean. Suggested setup:
+#   1. Install lint-staged at root:
+#        pnpm add -D -w lint-staged
+#   2. Add to root package.json:
+#        "lint-staged": {
+#          "*.{ts,tsx,js,jsx}": "eslint --fix",
+#          "*.{json,md,yml}": "prettier --write"
+#        }
+#   3. Replace this hook body with:
+#        npx lint-staged
+#
+# Avoid running the full `pnpm test` suite here — it is slow and any single
+# workspace failure blocks every commit. Run tests in CI instead.
+exit 0

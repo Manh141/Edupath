@@ -1,0 +1,33 @@
+{
+  "name": "edupath",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be",
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "dev:gateway": "pnpm --filter api-gateway start:dev",
+    "dev:auth": "pnpm --filter auth-service start:dev",
+    "dev:user": "pnpm --filter user-service start:dev",
+    "dev:course": "pnpm --filter course-service start:dev",
+    "dev:enrollment": "pnpm --filter enrollment-service start:dev",
+    "dev:payment": "pnpm --filter payment-service start:dev",
+    "dev:infra": "docker compose -f infra/docker/docker-compose.yml up -d",
+    "down:infra": "docker compose -f infra/docker/docker-compose.yml down",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "build": "pnpm -r build",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
+    "@types/node": "^25.5.0",
+    "@types/react": "18",
+    "@types/react-dom": "18",
+    "eslint": "^10.0.3",
+    "husky": "^9.1.7",
+    "prettier": "^3.8.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

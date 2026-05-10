@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ConversationType {
+  direct
+  course
+  support
+}
+
+enum ParticipantRole {
+  member
+  owner
+  moderator
+}
+
+enum MessageType {
+  text
+  system
+  attachment
+}
+
+enum DiscussionTargetType {
+  course
+  section
+  lecture
+}
+
+enum DiscussionStatus {
+  open
+  resolved
+  closed
+}
+
+model Conversation {
+  id            String              @id @default(cuid())
+  type          ConversationType    @default(direct)
+  title         String              @default("")
+  courseId      String?
+  lastMessageAt DateTime?
+  lastMessageId String?
+
+  createdBy     String
+  deletedAt     DateTime?
+
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  participants  ConversationParticipant[]
+  messages      Message[]
+
+  @@index([type])
+  @@index([courseId])
+  @@index([lastMessageAt])
+  @@index([deletedAt])
+}
+
+model ConversationParticipant {
+  id              String           @id @default(cuid())
+  conversationId  String
+  conversation    Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  userId          String
+  userDisplayName String           @default("")
+  userAvatarUrl   String           @default("")
+  userRole        String           @default("student")
+  participantRole ParticipantRole  @default(member)
+
+  lastReadMessageId String?
+  lastReadAt        DateTime?
+  unreadCount       Int            @default(0)
+  isArchived        Boolean        @default(false)
+  isMuted           Boolean        @default(false)
+
+  joinedAt        DateTime         @default(now())
+  leftAt          DateTime?
+
+  @@unique([conversationId, userId])
+  @@index([userId, isArchived])
+  @@index([conversationId])
+}
+
+model Message {
+  id              String           @id @default(cuid())
+  conversationId  String
+  conversation    Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId        String
+  senderDisplayName String         @default("")
+  senderAvatarUrl String           @default("")
+  senderRole      String           @default("student")
+
+  type            MessageType      @default(text)
+  content         String
+  metadata        Json?
+
+  editedAt        DateTime?
+  deletedAt       DateTime?
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  reads           MessageRead[]
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@index([deletedAt])
+}
+
+model MessageRead {
+  id          String   @id @default(cuid())
+  messageId   String
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId      String
+  readAt      DateTime @default(now())
+
+  @@unique([messageId, userId])
+  @@index([userId])
+}
+
+model Discussion {
+  id            String                 @id @default(cuid())
+  courseId      String
+  targetType    DiscussionTargetType   @default(course)
+  sectionId     String?
+  lectureId     String?
+
+  authorId          String
+  authorDisplayName String              @default("")
+  authorAvatarUrl   String              @default("")
+  authorRole        String              @default("student")
+
+  title         String                 @default("")
+  body          String
+  status        DiscussionStatus       @default(open)
+  isPinned      Boolean                @default(false)
+  upvotes       Int                    @default(0)
+  replyCount    Int                    @default(0)
+
+  deletedAt     DateTime?
+
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  replies       DiscussionReply[]
+
+  @@index([courseId, createdAt])
+  @@index([courseId, status])
+  @@index([sectionId])
+  @@index([lectureId])
+  @@index([authorId])
+  @@index([deletedAt])
+}
+
+model DiscussionReply {
+  id            String      @id @default(cuid())
+  discussionId  String
+  discussion    Discussion  @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+
+  parentReplyId String?
+  parentReply   DiscussionReply?  @relation("ReplyToReply", fields: [parentReplyId], references: [id], onDelete: SetNull)
+  childReplies  DiscussionReply[] @relation("ReplyToReply")
+
+  authorId          String
+  authorDisplayName String     @default("")
+  authorAvatarUrl   String     @default("")
+  authorRole        String     @default("student")
+  isInstructorReply Boolean    @default(false)
+
+  body          String
+  upvotes       Int         @default(0)
+
+  deletedAt     DateTime?
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([discussionId, createdAt])
+  @@index([parentReplyId])
+  @@index([authorId])
+  @@index([deletedAt])
+}
+
+model CourseReview {
+  id              String   @id @default(cuid())
+  courseId        String
+  userId          String
+  userDisplayName String   @default("")
+  userAvatarUrl   String   @default("")
+
+  rating          Int
+  title           String   @default("")
+  content         String   @default("")
+
+  isVisible       Boolean  @default(true)
+  deletedAt       DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([courseId, userId])
+  @@index([courseId, createdAt])
+  @@index([courseId, rating])
+  @@index([userId])
+  @@index([deletedAt])
+}
+
+model CourseRatingAggregate {
+  courseId       String   @id
+  averageRating  Float    @default(0)
+  totalReviews   Int      @default(0)
+  ratingOne      Int      @default(0)
+  ratingTwo      Int      @default(0)
+  ratingThree    Int      @default(0)
+  ratingFour     Int      @default(0)
+  ratingFive     Int      @default(0)
+  updatedAt      DateTime @updatedAt
+}

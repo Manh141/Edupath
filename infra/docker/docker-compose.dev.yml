@@ -1,0 +1,68 @@
+services:
+  auth-service:
+    build:
+      target: development
+    volumes:
+      - ../../services/auth_service:/app
+      - auth_service_node_modules:/app/node_modules
+
+  user-service:
+    build:
+      target: development
+    volumes:
+      - ../../services/user_service:/app
+      - user_service_node_modules:/app/node_modules
+
+  course-service:
+    build:
+      target: development
+    volumes:
+      - ../../services/course_service:/app
+      - course_service_node_modules:/app/node_modules
+
+  enrollment-service:
+    build:
+      target: development
+    volumes:
+      - ../../services/enrollment_service:/app
+      - enrollment_service_node_modules:/app/node_modules
+
+  payment-service:
+    build:
+      target: development
+    volumes:
+      - ../../services/payment_service:/app
+      - payment_service_node_modules:/app/node_modules
+
+  communication-service:
+    build:
+      target: development
+    volumes:
+      - ../../services/communication_service:/app
+      - communication_service_node_modules:/app/node_modules
+
+  api-gateway:
+    build:
+      target: development
+    volumes:
+      - ../../services/api_gateway:/app
+      - api_gateway_node_modules:/app/node_modules
+
+  web:
+    build:
+      target: development
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ../../apps/web:/app
+      - web_node_modules:/app/node_modules
+
+volumes:
+  auth_service_node_modules:
+  user_service_node_modules:
+  course_service_node_modules:
+  enrollment_service_node_modules:
+  payment_service_node_modules:
+  communication_service_node_modules:
+  api_gateway_node_modules:
+  web_node_modules:

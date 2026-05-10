@@ -1,0 +1,212 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/prisma"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AuthProvider {
+  local
+  google
+  facebook
+}
+
+enum AuthStatus {
+  pending_verification
+  active
+  suspended
+  disabled
+}
+
+enum SessionStatus {
+  active
+  revoked
+  expired
+}
+
+enum TokenPurpose {
+  email_verification
+  password_reset
+}
+
+enum AuthChallengePurpose {
+  register_email
+  login_email
+}
+
+enum AuditAction {
+  ADMIN_BOOTSTRAP
+  ROLE_GRANTED
+  ROLE_REVOKED
+  ACCOUNT_SUSPENDED
+  ACCOUNT_ENABLED
+  LOGIN_SUCCESS
+  LOGOUT
+  REFRESH_TOKEN_ROTATED
+  ADMIN_ACCESSED_RESOURCE
+}
+
+model Role {
+  id           Int               @id @default(autoincrement())
+  name         String            @unique
+  description  String?
+  accounts     AuthAccount[]
+  accountRoles AuthAccountRole[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@map("roles")
+}
+
+model AuthAccount {
+  id                  String  @id @default(cuid())
+  email               String  @unique
+  normalizedEmail     String  @unique
+  passwordHash        String?
+  forcePasswordChange Boolean @default(false)
+  roleId              Int
+  role                Role    @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  provider        AuthProvider @default(local)
+  status          AuthStatus   @default(pending_verification)
+  isEmailVerified Boolean      @default(false)
+
+  lastLoginAt       DateTime?
+  passwordChangedAt DateTime?
+
+  oauthAccounts OAuthProviderAccount[]
+  sessions      AuthSession[]
+  tokens        AuthToken[]
+  accountRoles  AuthAccountRole[]      @relation("AccountRoles")
+  grantedRoles  AuthAccountRole[]      @relation("RoleAssignedBy")
+  challenges    AuthChallenge[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([roleId])
+  @@index([status])
+  @@index([provider])
+  @@index([normalizedEmail])
+  @@map("auth_accounts")
+}
+
+model AuthAccountRole {
+  id                      String       @id @default(cuid())
+  authAccountId           String
+  authAccount             AuthAccount  @relation("AccountRoles", fields: [authAccountId], references: [id], onDelete: Cascade)
+  roleId                  Int
+  role                    Role         @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  assignedByAuthAccountId String?
+  assignedByAuthAccount   AuthAccount? @relation("RoleAssignedBy", fields: [assignedByAuthAccountId], references: [id], onDelete: SetNull)
+  assignedAt              DateTime     @default(now())
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+
+  @@unique([authAccountId, roleId])
+  @@index([roleId])
+  @@index([assignedByAuthAccountId])
+  @@map("auth_account_roles")
+}
+
+model OAuthProviderAccount {
+  id            String      @id @default(cuid())
+  authAccountId String
+  authAccount   AuthAccount @relation(fields: [authAccountId], references: [id], onDelete: Cascade)
+
+  provider       AuthProvider
+  providerUserId String
+  providerEmail  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerUserId])
+  @@index([authAccountId])
+  @@map("oauth_provider_accounts")
+}
+
+model AuthSession {
+  id            String      @id @default(cuid())
+  authAccountId String
+  authAccount   AuthAccount @relation(fields: [authAccountId], references: [id], onDelete: Cascade)
+
+  refreshTokenHash String        @unique
+  userAgent        String?
+  ipAddress        String?
+  expiresAt        DateTime
+  status           SessionStatus @default(active)
+  revokedAt        DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([authAccountId])
+  @@index([expiresAt])
+  @@index([status])
+  @@map("auth_sessions")
+}
+
+model AuthToken {
+  id            String      @id @default(cuid())
+  authAccountId String
+  authAccount   AuthAccount @relation(fields: [authAccountId], references: [id], onDelete: Cascade)
+
+  purpose    TokenPurpose
+  tokenHash  String       @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime     @default(now())
+
+  @@index([authAccountId])
+  @@index([purpose])
+  @@index([expiresAt])
+  @@map("auth_tokens")
+}
+
+model AuthChallenge {
+  id              String               @id @default(cuid())
+  authAccountId   String?
+  authAccount     AuthAccount?         @relation(fields: [authAccountId], references: [id], onDelete: SetNull)
+  email           String
+  normalizedEmail String
+  purpose         AuthChallengePurpose
+  requestedRole   String?
+  fullName        String?
+  passwordHash    String?
+  codeHash        String
+  expiresAt       DateTime
+  consumedAt      DateTime?
+  attemptCount    Int                  @default(0)
+  resendCount     Int                  @default(0)
+  lastSentAt      DateTime             @default(now())
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([authAccountId])
+  @@index([normalizedEmail, purpose])
+  @@index([expiresAt])
+  @@map("auth_challenges")
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  action      AuditAction
+  actorId     String?
+  actorEmail  String?
+  targetId    String?
+  targetEmail String?
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime    @default(now())
+
+  @@index([actorId])
+  @@index([targetId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

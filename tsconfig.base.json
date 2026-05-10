@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["ES2022"],
+    "strict": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@edupath/shared-config/*": ["packages/shared-config/src/*"],
+      "@edupath/shared-types/*": ["packages/shared-types/src/*"],
+      "@edupath/shared-errors/*": ["packages/shared-errors/src/*"],
+      "@edupath/shared-utils/*": ["packages/shared-utils/src/*"]
+    }
+  }
+}
