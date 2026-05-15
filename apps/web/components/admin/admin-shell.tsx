@@ -276,9 +276,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const compact = collapsed;
 
   return (
-    <div className="min-h-screen bg-background text-body">
-      <div className="flex min-h-screen">
-        <TooltipProvider delayDuration={120}>
+    <TooltipProvider delayDuration={120}>
+      <div className="min-h-screen bg-background text-body">
+        <div className="flex min-h-screen">
           <aside
             className={cn(
               "relative hidden shrink-0 border-r border-[#0c1526] bg-[#0c1526] transition-[width] duration-300 ease-out lg:flex lg:flex-col",
@@ -330,28 +330,28 @@ export function AdminShell({ children }: { children: ReactNode }) {
               </span>
             </button>
           </aside>
-        </TooltipProvider>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar onMenuOpen={() => setMobileOpen(true)} />
-          <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <Topbar onMenuOpen={() => setMobileOpen(true)} />
+            <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+          </div>
+
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetContent
+              side="left"
+              className="w-[280px] max-w-[85vw] border-r-0 bg-[#0c1526] p-0"
+            >
+              <SheetHeader className="sr-only">
+                <SheetTitle>Admin navigation</SheetTitle>
+              </SheetHeader>
+              <SidebarContent
+                compact={false}
+                onNavigate={() => setMobileOpen(false)}
+              />
+            </SheetContent>
+          </Sheet>
         </div>
-
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent
-            side="left"
-            className="w-[280px] max-w-[85vw] border-r-0 bg-[#0c1526] p-0"
-          >
-            <SheetHeader className="sr-only">
-              <SheetTitle>Admin navigation</SheetTitle>
-            </SheetHeader>
-            <SidebarContent
-              compact={false}
-              onNavigate={() => setMobileOpen(false)}
-            />
-          </SheetContent>
-        </Sheet>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

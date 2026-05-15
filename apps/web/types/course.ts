@@ -48,8 +48,19 @@ export const EDITABLE_STATUSES: CourseStatus[] = [
   "changes_requested",
 ];
 
+export const DELETABLE_STATUSES: CourseStatus[] = [
+  "draft",
+  "in_progress",
+  "changes_requested",
+  "rejected",
+];
+
 export function isEditableStatus(status?: string | null): boolean {
   return Boolean(status) && EDITABLE_STATUSES.includes(status as CourseStatus);
+}
+
+export function isDeletableStatus(status?: string | null): boolean {
+  return Boolean(status) && DELETABLE_STATUSES.includes(status as CourseStatus);
 }
 
 // ─── Catalog ──────────────────────────────────────────────────────────────────

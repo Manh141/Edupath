@@ -8,6 +8,7 @@ import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { ApiError, authApi } from "@/lib/auth-api";
 import { useAuth } from "@/contexts/AuthContext";
+import { enableFacebookLogin } from "@/lib/feature-flags";
 import {
   resolveAuthenticatedPath,
   type ActiveRole as SessionActiveRole,
@@ -110,10 +111,13 @@ export default function RoleAuthPage({ role }: { role: AuthPortalRole }) {
     () => authApi.getSocialAuthorizeUrl("google", config.loginRedirect),
     [config.loginRedirect],
   );
-  const facebookAuthorizeUrl = useMemo(
-    () => authApi.getSocialAuthorizeUrl("facebook", config.loginRedirect),
-    [config.loginRedirect],
-  );
+  const facebookAuthorizeUrl = useMemo(() => {
+    if (!enableFacebookLogin) {
+      return "";
+    }
+
+    return authApi.getSocialAuthorizeUrl("facebook", config.loginRedirect);
+  }, [config.loginRedirect]);
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -331,7 +335,11 @@ export default function RoleAuthPage({ role }: { role: AuthPortalRole }) {
             </button>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <div
+            className={`mt-6 grid gap-3 ${
+              enableFacebookLogin ? "sm:grid-cols-2" : ""
+            }`}
+          >
             <Button
               type="button"
               variant="outline"
@@ -341,15 +349,17 @@ export default function RoleAuthPage({ role }: { role: AuthPortalRole }) {
               <span>Continue with Google</span>
               <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full justify-between"
-              onClick={() => handleSocialLogin("facebook")}
-            >
-              <span>Continue with Facebook</span>
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            {enableFacebookLogin ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-between"
+                onClick={() => handleSocialLogin("facebook")}
+              >
+                <span>Continue with Facebook</span>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            ) : null}
           </div>
 
           <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">

@@ -10,6 +10,8 @@ import {
   ChevronDown,
   ChevronRight,
   Circle,
+  Download,
+  FileText,
   Lock,
   PlayCircle,
 } from "lucide-react";
@@ -40,6 +42,46 @@ function formatDuration(seconds?: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function getLectureTypeLabel(type: CourseLecture["type"]) {
+  switch (type) {
+    case "article":
+      return "Article";
+    case "resource":
+      return "Resource";
+    case "video":
+    default:
+      return "Video";
+  }
+}
+
+function getLectureDisplayType(lecture: CourseLecture): CourseLecture["type"] {
+  if (lecture.type === "video" && lecture.videoUrl) {
+    return "video";
+  }
+
+  if (lecture.type === "article" && lecture.articleContent?.trim()) {
+    return "article";
+  }
+
+  if (lecture.type === "resource" && (lecture.assets?.length ?? 0) > 0) {
+    return "resource";
+  }
+
+  if (lecture.videoUrl) {
+    return "video";
+  }
+
+  if (lecture.articleContent?.trim()) {
+    return "article";
+  }
+
+  if ((lecture.assets?.length ?? 0) > 0) {
+    return "resource";
+  }
+
+  return lecture.type ?? "video";
 }
 
 // ─── Sidebar item ─────────────────────────────────────────────────────────────
@@ -209,6 +251,9 @@ export default function LearningPage({ courseId }: { courseId: string }) {
       : defaultLectureId;
 
   const activeLecture = allLectures.find((l) => l.id === activeLectureId);
+  const activeLectureDisplayType = activeLecture
+    ? getLectureDisplayType(activeLecture)
+    : "video";
   const currentIdx = allLectures.findIndex((l) => l.id === activeLectureId);
   const prevLecture = currentIdx > 0 ? allLectures[currentIdx - 1] : null;
   const nextLecture =
@@ -307,34 +352,99 @@ export default function LearningPage({ courseId }: { courseId: string }) {
               </div>
             ) : (
               <div className="flex flex-col">
-                {/* Video area */}
-                <div className="w-full bg-black">
-                  {activeLecture.videoUrl ? (
-                    <div className="mx-auto max-w-4xl aspect-video">
-                      <video
-                        key={activeLecture.videoUrl}
-                        src={activeLecture.videoUrl}
-                        controls
-                        className="h-full w-full"
-                        onEnded={() => {
-                          if (activeLecture) markComplete(activeLecture);
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="mx-auto max-w-4xl aspect-video flex items-center justify-center">
-                      <div className="text-center text-white/60">
-                        <PlayCircle className="mx-auto mb-3 h-16 w-16" />
-                        <p className="text-sm">No video available for this lecture.</p>
+                {/* Lecture content area */}
+                {activeLectureDisplayType === "video" ? (
+                  <div className="w-full bg-black">
+                    {activeLecture.videoUrl ? (
+                      <div className="mx-auto max-w-4xl aspect-video">
+                        <video
+                          key={activeLecture.videoUrl}
+                          src={activeLecture.videoUrl}
+                          controls
+                          className="h-full w-full"
+                          onEnded={() => {
+                            if (activeLecture) markComplete(activeLecture);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="mx-auto flex aspect-video max-w-4xl items-center justify-center">
+                        <div className="text-center text-white/60">
+                          <PlayCircle className="mx-auto mb-3 h-16 w-16" />
+                          <p className="text-sm">
+                            No video available for this lecture.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : activeLectureDisplayType === "article" ? (
+                  <div className="border-b border-border bg-card">
+                    <div className="mx-auto w-full max-w-4xl px-6 py-10">
+                      <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+                        <FileText className="h-3.5 w-3.5" />
+                        Article lesson
+                      </div>
+                      <div className="rounded-2xl border border-border bg-background p-6">
+                        {activeLecture.articleContent?.trim() ? (
+                          <div className="whitespace-pre-line text-sm leading-7 text-foreground">
+                            {activeLecture.articleContent}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            No article content available for this lecture.
+                          </p>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="border-b border-border bg-card">
+                    <div className="mx-auto w-full max-w-4xl px-6 py-10">
+                      <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+                        <Download className="h-3.5 w-3.5" />
+                        Resource lesson
+                      </div>
+                      <div className="rounded-2xl border border-border bg-background p-6">
+                        {activeLecture.assets && activeLecture.assets.length > 0 ? (
+                          <div className="space-y-3">
+                            {activeLecture.assets.map((asset) => (
+                              <a
+                                key={asset.id}
+                                href={asset.fileUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center justify-between gap-3 rounded-xl border border-border px-4 py-3 text-sm transition hover:bg-secondary"
+                              >
+                                <div className="min-w-0">
+                                  <p className="truncate font-medium text-foreground">
+                                    {asset.name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {asset.mimeType || asset.fileType}
+                                  </p>
+                                </div>
+                                <Download className="h-4 w-4 shrink-0 text-brand" />
+                              </a>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            No resources available for this lecture.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Lecture info */}
                 <div className="mx-auto w-full max-w-4xl px-6 py-6">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
+                      <div className="mb-2 inline-flex rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+                        {getLectureTypeLabel(activeLectureDisplayType)}
+                      </div>
                       <h1 className="font-heading text-xl font-bold text-brand">
                         {activeLecture.title}
                       </h1>
@@ -364,6 +474,41 @@ export default function LearningPage({ courseId }: { courseId: string }) {
                   </div>
 
                   <Separator className="my-5" />
+
+                  {activeLectureDisplayType !== "resource" &&
+                  activeLecture.assets &&
+                  activeLecture.assets.length > 0 ? (
+                    <>
+                      <div>
+                        <h2 className="text-sm font-semibold text-foreground">
+                          Lecture resources
+                        </h2>
+                        <div className="mt-3 space-y-3">
+                          {activeLecture.assets.map((asset) => (
+                            <a
+                              key={asset.id}
+                              href={asset.fileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center justify-between gap-3 rounded-xl border border-border px-4 py-3 text-sm transition hover:bg-secondary"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate font-medium text-foreground">
+                                  {asset.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {asset.mimeType || asset.fileType}
+                                </p>
+                              </div>
+                              <Download className="h-4 w-4 shrink-0 text-brand" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Separator className="my-5" />
+                    </>
+                  ) : null}
 
                   {/* Navigation */}
                   <div className="flex items-center justify-between gap-4">

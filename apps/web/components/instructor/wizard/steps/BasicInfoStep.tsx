@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
-import { courseApi, instructorApi } from "@/lib/course-api";
+import { ApiError, courseApi, instructorApi } from "@/lib/course-api";
 import type { Course, CourseLevel } from "@/types/course";
 
 const PICK_LATER = "__pick_later__";
@@ -121,6 +121,12 @@ export function BasicInfoStep({
       onChanged();
     },
     onError: (error) => {
+      if (error instanceof ApiError && error.statusCode === 409) {
+        form.setError("title", {
+          type: "server",
+          message: error.message,
+        });
+      }
       toast.error(error instanceof Error ? error.message : "Failed to save basic info.");
     },
   });
@@ -150,6 +156,12 @@ export function BasicInfoStep({
                         placeholder="e.g. Build Production NestJS Microservices"
                         disabled={!editable}
                         {...field}
+                        onChange={(event) => {
+                          if (form.formState.errors.title?.type === "server") {
+                            form.clearErrors("title");
+                          }
+                          field.onChange(event);
+                        }}
                       />
                     </FormControl>
                     <FormDescription>

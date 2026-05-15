@@ -166,6 +166,12 @@ services:
         condition: service_started
     ports:
       - "${AUTH_SERVICE_PORT:-3001}:3001"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/api/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - edupath
 
@@ -186,6 +192,12 @@ services:
         condition: service_started
     ports:
       - "${USER_SERVICE_PORT:-3002}:3002"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3002/api/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - edupath
 
@@ -206,6 +218,12 @@ services:
         condition: service_started
     ports:
       - "${COURSE_SERVICE_PORT:-3003}:3003"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3003/api/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - edupath
 
@@ -224,6 +242,12 @@ services:
         condition: service_healthy
     ports:
       - "${ENROLLMENT_SERVICE_PORT:-3004}:3004"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3004/api/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - edupath
 
@@ -244,6 +268,12 @@ services:
         condition: service_started
     ports:
       - "${PAYMENT_SERVICE_PORT:-3005}:3005"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3005/api/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - edupath
 
@@ -262,6 +292,12 @@ services:
         condition: service_healthy
     ports:
       - "${COMMUNICATION_SERVICE_PORT:-3007}:3007"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3007/api/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - edupath
 
@@ -275,19 +311,25 @@ services:
       - ./env/api-gateway.env
     depends_on:
       auth-service:
-        condition: service_started
+        condition: service_healthy
       user-service:
-        condition: service_started
+        condition: service_healthy
       course-service:
-        condition: service_started
+        condition: service_healthy
       enrollment-service:
-        condition: service_started
+        condition: service_healthy
       payment-service:
-        condition: service_started
+        condition: service_healthy
       communication-service:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "${API_GATEWAY_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
     networks:
       - edupath
 
@@ -310,9 +352,15 @@ services:
       NODE_ENV: production
     depends_on:
       api-gateway:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "${WEB_PORT:-3006}:3006"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3006 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     networks:
       - edupath
 

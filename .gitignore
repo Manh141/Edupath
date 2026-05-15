@@ -138,3 +138,11 @@ __pycache__/
 *.heapsnapshot
 *.cpuprofile
 report.*.json
+
+# Codex / local tooling
+.codex-logs/
+.tools/
+
+# Docker infra envs should stay local only
+infra/docker/.env*
+infra/docker/env/

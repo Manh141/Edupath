@@ -102,11 +102,7 @@ export async function apiRequest<T>(
   return unwrapData<T>(payload);
 }
 
-/**
- * XMLHttpRequest-based multipart upload with progress events.
- * Used by the instructor course wizard for thumbnails, promo videos, lecture
- * videos and resources.
- */
+
 export function apiUpload<T>(path: string, config: UploadConfig): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const xhr = new XMLHttpRequest();

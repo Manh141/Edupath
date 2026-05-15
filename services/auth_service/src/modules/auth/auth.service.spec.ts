@@ -2,7 +2,11 @@ import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { AUTH_CHALLENGE_CODE_LENGTH, AUTH_MESSAGES, DEFAULT_STUDENT_ROLE } from '../../common/constants/auth.constants';
+import {
+  AUTH_CHALLENGE_CODE_LENGTH,
+  AUTH_MESSAGES,
+  DEFAULT_STUDENT_ROLE,
+} from '../../common/constants/auth.constants';
 import {
   AuthChallengePurpose,
   AuthProvider,
@@ -15,6 +19,28 @@ import type { OAuthService } from './oauth.service';
 import { AuthService } from './auth.service';
 import type { SessionService } from './session.service';
 import type { TokenService } from './token.service';
+
+type AuthChallengeCreateCall = {
+  data: {
+    passwordHash?: string | null;
+  };
+};
+
+type AuthAccountCreateCall = {
+  data: {
+    email?: string;
+    passwordHash?: string | null;
+    provider?: AuthProvider;
+    status?: AuthStatus;
+    isEmailVerified?: boolean;
+  };
+};
+
+function getFirstMockArg<T>(mockFn: {
+  mock: { calls: unknown[][] };
+}): T | undefined {
+  return mockFn.mock.calls[0]?.[0] as T | undefined;
+}
 
 function createConfigService(overrides: Record<string, unknown> = {}) {
   const values: Record<string, unknown> = {
@@ -142,7 +168,9 @@ describe('AuthService', () => {
   });
 
   it('generates a 6-digit OTP code', () => {
-    const code = (service as unknown as { generateNumericCode: () => string }).generateNumericCode();
+    const code = (
+      service as unknown as { generateNumericCode: () => string }
+    ).generateNumericCode();
 
     expect(code).toHaveLength(AUTH_CHALLENGE_CODE_LENGTH);
     expect(code).toMatch(/^\d{6}$/);
@@ -170,14 +198,20 @@ describe('AuthService', () => {
       password: 'PlainText#123',
     });
 
-    const passwordHash = prisma.authChallenge.create.mock.calls[0][0].data.passwordHash as string;
+    const authChallengeCreateArg = getFirstMockArg<AuthChallengeCreateCall>(
+      prisma.authChallenge.create,
+    );
+    const passwordHash = authChallengeCreateArg?.data.passwordHash;
 
     expect(result.email).toBe('user@example.com');
     expect(result.requestedRole).toBe('student');
     expect(result._devCode).toBe('100000');
     expect(result._devCode).toMatch(/^\d{6}$/);
+    expect(passwordHash).toEqual(expect.any(String));
     expect(passwordHash).not.toBe('PlainText#123');
-    await expect(bcrypt.compare('PlainText#123', passwordHash)).resolves.toBe(true);
+    await expect(
+      bcrypt.compare('PlainText#123', passwordHash as string),
+    ).resolves.toBe(true);
     expect(mailQueue.add).toHaveBeenCalledWith('send-auth-code-email', {
       email: 'user@example.com',
       code: '100000',
@@ -231,18 +265,17 @@ describe('AuthService', () => {
       code: '123456',
     });
 
-    expect(result).toEqual({ message: 'Registration complete. Please sign in.' });
-    expect(prisma.authAccount.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          email: 'user@example.com',
-          passwordHash,
-          provider: AuthProvider.local,
-          status: AuthStatus.active,
-          isEmailVerified: true,
-        }),
-      }),
+    expect(result).toEqual({
+      message: 'Registration complete. Please sign in.',
+    });
+    const authAccountCreateArg = getFirstMockArg<AuthAccountCreateCall>(
+      prisma.authAccount.create,
     );
+    expect(authAccountCreateArg?.data.email).toBe('user@example.com');
+    expect(authAccountCreateArg?.data.passwordHash).toBe(passwordHash);
+    expect(authAccountCreateArg?.data.provider).toBe(AuthProvider.local);
+    expect(authAccountCreateArg?.data.status).toBe(AuthStatus.active);
+    expect(authAccountCreateArg?.data.isEmailVerified).toBe(true);
   });
 
   it('rejects OTP verification when the code is wrong', async () => {
@@ -360,9 +393,13 @@ describe('AuthService', () => {
       consumedAt: new Date(),
     });
     prisma.authAccount.findUnique.mockResolvedValue(baseAccount);
-    prisma.role.findMany.mockResolvedValue([{ id: 'role-student', name: 'student' }]);
+    prisma.role.findMany.mockResolvedValue([
+      { id: 'role-student', name: 'student' },
+    ]);
     prisma.authAccountRole.createMany.mockResolvedValue({ count: 1 });
-    prisma.authAccountRole.findMany.mockResolvedValue([{ role: { name: 'student' } }]);
+    prisma.authAccountRole.findMany.mockResolvedValue([
+      { role: { name: 'student' } },
+    ]);
     prisma.authAccount.update.mockResolvedValue({ id: 'account-1' });
     tokenService.generateOpaqueToken
       .mockReturnValueOnce('refresh-token')
@@ -409,16 +446,24 @@ describe('AuthService', () => {
         role: { name: 'student' },
       },
     });
-    prisma.role.findMany.mockResolvedValue([{ id: 'role-student', name: 'student' }]);
+    prisma.role.findMany.mockResolvedValue([
+      { id: 'role-student', name: 'student' },
+    ]);
     prisma.authAccountRole.createMany.mockResolvedValue({ count: 1 });
-    prisma.authAccountRole.findMany.mockResolvedValue([{ role: { name: 'student' } }]);
+    prisma.authAccountRole.findMany.mockResolvedValue([
+      { role: { name: 'student' } },
+    ]);
     sessionService.createSession.mockResolvedValue({ id: 'session-2' });
     tokenService.generateOpaqueToken.mockReset();
     tokenService.generateOpaqueToken
       .mockReturnValueOnce('rotated-refresh-token')
       .mockReturnValueOnce('rotated-jti');
 
-    const result = await service.refresh('old-refresh-token', 'jest-agent', '127.0.0.1');
+    const result = await service.refresh(
+      'old-refresh-token',
+      'jest-agent',
+      '127.0.0.1',
+    );
 
     expect(result).toEqual({
       message: 'Session refreshed successfully.',
@@ -427,7 +472,9 @@ describe('AuthService', () => {
       accessTokenType: 'Bearer',
       expiresIn: '15m',
     });
-    expect(sessionService.revokeSessionByRefreshToken).toHaveBeenCalledWith('old-refresh-token');
+    expect(sessionService.revokeSessionByRefreshToken).toHaveBeenCalledWith(
+      'old-refresh-token',
+    );
     expect(sessionService.createSession).toHaveBeenCalledWith(
       expect.objectContaining({
         authAccountId: 'account-1',

@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OrderStatus, PaymentMethod, PaymentStatus } from '../../common/prisma/prisma-client';

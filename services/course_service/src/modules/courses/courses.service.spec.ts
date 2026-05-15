@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { CourseLevel, CourseStatus, CourseStatusActorType } from '../../common/prisma/prisma-client';
 import type { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import type { PrismaService } from '../../common/prisma/prisma.service';
@@ -131,6 +131,41 @@ describe('CoursesService', () => {
         actorType: CourseStatusActorType.instructor,
       }),
     );
+  });
+
+  it('rejects duplicate course titles for the same instructor when creating a draft', async () => {
+    prisma.course.findFirst.mockResolvedValue({
+      id: 'course-existing',
+    });
+
+    await expect(
+      service.createDraft(instructorUser, {
+        title: 'NestJS Mastery',
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+
+    expect(prisma.course.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects duplicate course titles for the same instructor when updating a draft', async () => {
+    prisma.course.findUnique.mockResolvedValue({
+      id: 'course-1',
+      deletedAt: null,
+      status: CourseStatus.draft,
+      title: 'Existing Course',
+      instructors: [{ instructorId: 'instructor-1' }],
+    });
+    prisma.course.findFirst.mockResolvedValue({
+      id: 'course-existing',
+    });
+
+    await expect(
+      service.updateDraft('course-1', instructorUser, {
+        title: 'NestJS Mastery',
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+
+    expect(prisma.course.update).not.toHaveBeenCalled();
   });
 
   it('prevents instructors from editing another instructor course', async () => {

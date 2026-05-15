@@ -7,11 +7,7 @@ import { InternalAdminController } from './internal-admin.controller';
 
 @Module({
   controllers: [AdminController, InternalAdminController],
-  providers: [
-    AdminAccountsConfig,
-    AdminBootstrapService,
-    InternalServiceGuard,
-  ],
+  providers: [AdminAccountsConfig, AdminBootstrapService, InternalServiceGuard],
   exports: [AdminAccountsConfig, AdminBootstrapService],
 })
 export class AdminModule {}

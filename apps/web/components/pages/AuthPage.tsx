@@ -7,6 +7,7 @@ import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { ApiError, authApi } from "@/lib/auth-api";
 import { resolveAuthenticatedPath } from "@/lib/auth-session";
+import { enableFacebookLogin } from "@/lib/feature-flags";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,10 +150,13 @@ export default function AuthPage({ role = "student" }: AuthPageProps) {
     () => authApi.getSocialAuthorizeUrl("google", nextPath),
     [nextPath],
   );
-  const facebookAuthorizeUrl = useMemo(
-    () => authApi.getSocialAuthorizeUrl("facebook", nextPath),
-    [nextPath],
-  );
+  const facebookAuthorizeUrl = useMemo(() => {
+    if (!enableFacebookLogin) {
+      return "";
+    }
+
+    return authApi.getSocialAuthorizeUrl("facebook", nextPath);
+  }, [nextPath]);
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -388,9 +392,15 @@ export default function AuthPage({ role = "student" }: AuthPageProps) {
             </button>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <div
+            className={`mt-6 grid gap-3 ${
+              enableFacebookLogin ? "sm:grid-cols-2" : ""
+            }`}
+          >
             <SocialButton provider="google" onClick={handleSocialLogin} />
-            <SocialButton provider="facebook" onClick={handleSocialLogin} />
+            {enableFacebookLogin ? (
+              <SocialButton provider="facebook" onClick={handleSocialLogin} />
+            ) : null}
           </div>
 
           <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">

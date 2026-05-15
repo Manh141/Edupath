@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -181,6 +182,8 @@ export class CoursesService {
     if (dto.subcategoryId) {
       await this.assertSubcategoryExists(dto.subcategoryId);
     }
+
+    await this.assertUniqueCourseTitleForInstructors(title, [currentUser.sub]);
 
     const slug = await generateUniqueSlug(title || 'draft-course', async (candidate) => {
       const exists = await this.prisma.course.findUnique({ where: { slug: candidate } });
@@ -720,6 +723,11 @@ export class CoursesService {
     }
 
     const title = dto.title?.trim();
+    await this.assertUniqueCourseTitleForInstructors(
+      title,
+      course.instructors.map((instructor) => instructor.instructorId),
+      id,
+    );
     const slug =
       title !== undefined && title !== course.title
         ? await generateUniqueSlug(title || 'draft-course', async (candidate) => {
@@ -1765,6 +1773,49 @@ export class CoursesService {
 
     if (!exists) {
       throw new BadRequestException('Selected subcategory does not exist.');
+    }
+  }
+
+  private async assertUniqueCourseTitleForInstructors(
+    title: string | undefined,
+    instructorIds: string[],
+    excludeCourseId?: string,
+  ): Promise<void> {
+    const normalizedTitle = title?.trim();
+
+    if (!normalizedTitle || instructorIds.length === 0) {
+      return;
+    }
+
+    const duplicate = await this.prisma.course.findFirst({
+      where: {
+        deletedAt: null,
+        title: {
+          equals: normalizedTitle,
+          mode: 'insensitive',
+        },
+        instructors: {
+          some: {
+            instructorId: {
+              in: instructorIds,
+            },
+          },
+        },
+        ...(excludeCourseId
+          ? {
+              NOT: {
+                id: excludeCourseId,
+              },
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (duplicate) {
+      throw new ConflictException('You already have a course with this title.');
     }
   }
 

@@ -1,6 +1,6 @@
 # EduPath Admin UI v2.0
 
-## Đã thêm
+## Added
 - `app/admin/layout.tsx`
 - `app/admin/page.tsx`
 - `app/admin/overview/page.tsx`
@@ -11,11 +11,11 @@
 - `app/admin/rbac/page.tsx`
 - `components/admin/*`
 
-## Đã chỉnh
-- `app/globals.css` — đổi palette + font sang Inter / Montserrat, thêm utility cho admin surface
-- `components/ui/button.tsx` — thêm style production SaaS + variant `cta`
-- `components/layout/AppShell.tsx` — ẩn header/footer public ở route `/admin/*`
-- `tsconfig.json` — đổi `ignoreDeprecations` từ `6.0` sang `5.0`
+## Updated
+- `app/globals.css` - updated the palette and fonts to Inter / Montserrat, and added utilities for the admin surface
+- `components/ui/button.tsx` - added production SaaS styling and the `cta` variant
+- `components/layout/AppShell.tsx` - hides the public header/footer on `/admin/*` routes
+- `tsconfig.json` - changed `ignoreDeprecations` from `6.0` to `5.0`
 
 ## Palette
 - Brand / heading: `#1B263B`
@@ -23,11 +23,11 @@
 - Body text: `#415A77`
 - CTA: `#F77F00`
 
-## Font
+## Fonts
 - Heading: Montserrat
 - Body: Inter
 
-## Route admin mới
+## New Admin Routes
 - `/admin/overview`
 - `/admin/users`
 - `/admin/courses`
@@ -35,5 +35,5 @@
 - `/admin/reports`
 - `/admin/rbac`
 
-## Lưu ý
-Đây là UI scaffold production-style, chưa nối mutation/query thật với backend. Bạn có thể map trực tiếp vào API gateway hoặc service admin riêng sau.
+## Notes
+This is a production-style UI scaffold. It is not yet wired to real backend mutations or queries. You can map it directly to the API gateway or to a dedicated admin service later.

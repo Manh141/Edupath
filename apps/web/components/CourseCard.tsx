@@ -18,9 +18,9 @@ interface CourseCardProps {
 }
 
 const levelLabels: Record<string, string> = {
-  beginner: "Cơ bản",
-  intermediate: "Trung cấp",
-  advanced: "Nâng cao",
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
 };
 
 const levelColors: Record<string, string> = {
@@ -78,7 +78,7 @@ export default function CourseCard({
         <div className="mt-auto flex items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-            {averageRating > 0 ? averageRating.toFixed(1) : "Mới"}
+            {averageRating > 0 ? averageRating.toFixed(1) : "New"}
           </span>
           <span className="flex items-center gap-1">
             <Users className="h-3.5 w-3.5" />
@@ -96,7 +96,7 @@ export default function CourseCard({
             {levelLabels[level] || level}
           </Badge>
           <span className="font-bold text-foreground">
-            {price > 0 ? `${price.toLocaleString("vi-VN")}₫` : "Miễn phí"}
+            {price > 0 ? `${price.toLocaleString("en-US")}₫` : "Free"}
           </span>
         </div>
       </div>

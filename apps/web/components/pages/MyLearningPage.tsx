@@ -103,16 +103,16 @@ function EnrollmentCard({ enrollment }: { enrollment: Enrollment }) {
               <Button variant="hero" size="sm">
                 <PlayCircle className="mr-1.5 h-4 w-4" />
                 {progressValue === 0
-                  ? "Bắt đầu học"
+                  ? "Start learning"
                   : isCompleted
-                    ? "Xem lại"
-                    : "Tiếp tục học"}
+                    ? "Review"
+                    : "Continue learning"}
               </Button>
             </Link>
             {course?.slug ? (
               <Link href={`/courses/${course.slug}`}>
                 <Button variant="outline" size="sm">
-                  Chi tiết khóa học
+                  Course details
                 </Button>
               </Link>
             ) : null}
@@ -204,15 +204,15 @@ export default function MyLearningPage() {
             <div className="flex items-start gap-3">
               <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
               <p className="text-sm text-emerald-900">
-                <span className="font-semibold">Thanh toán thành công!</span>{" "}
-                Các khóa học đã được thêm vào My Learning. Chọn một khóa học
-                bên dưới để bắt đầu học.
+                <span className="font-semibold">Payment successful!</span>{" "}
+                Your courses have been added to My Learning. Choose one below
+                to start learning.
               </p>
             </div>
             <div className="flex items-center gap-2">
               <Link href="/courses">
                 <Button variant="outline" size="sm">
-                  Tiếp tục mua
+                  Continue shopping
                 </Button>
               </Link>
               <Button
@@ -234,13 +234,13 @@ export default function MyLearningPage() {
               My Learning
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Tất cả khóa học bạn đã mua và đang theo học.
+              All courses you have purchased and are currently taking.
             </p>
           </div>
           <Link href="/courses">
             <Button variant="outline" size="sm">
               <BookOpen className="mr-1.5 h-4 w-4" />
-              Duyệt thêm khóa học
+              Browse more courses
             </Button>
           </Link>
         </div>
@@ -271,7 +271,7 @@ export default function MyLearningPage() {
             <Input
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Tìm khóa học..."
+              placeholder="Search courses..."
               className="pl-9"
             />
           </div>
@@ -290,14 +290,14 @@ export default function MyLearningPage() {
           <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-10 text-center">
             <BookOpen className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
             <p className="font-medium text-destructive">
-              Không tải được danh sách khóa học.
+              Could not load your course list.
             </p>
             <Button
               variant="outline"
               className="mt-4"
               onClick={() => enrollmentsQuery.refetch()}
             >
-              Thử lại
+              Try again
             </Button>
           </div>
         ) : filteredEnrollments.length === 0 ? (
@@ -305,18 +305,18 @@ export default function MyLearningPage() {
             <GraduationCap className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
             <p className="font-medium text-foreground">
               {total === 0
-                ? "Bạn chưa đăng ký khóa học nào."
-                : "Không có khóa học nào khớp với bộ lọc."}
+                ? "You have not enrolled in any courses yet."
+                : "No courses match the current filters."}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {total === 0
-                ? "Khám phá catalog và mua khóa học để bắt đầu học."
-                : "Thử đổi bộ lọc hoặc xóa từ khóa tìm kiếm."}
+                ? "Browse the catalog and enroll in a course to get started."
+                : "Try changing the filters or clearing the search keyword."}
             </p>
             {total === 0 ? (
               <Link href="/courses" className="mt-4 inline-block">
                 <Button variant="hero" size="sm">
-                  Duyệt khóa học
+                  Browse courses
                 </Button>
               </Link>
             ) : null}

@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { courseApi, instructorApi } from "@/lib/course-api";
+import { ApiError, courseApi, instructorApi } from "@/lib/course-api";
 
 const PICK_LATER = "__pick_later__";
 
@@ -111,6 +111,12 @@ export default function InstructorNewCoursePage() {
       });
     },
     onError: (error) => {
+      if (error instanceof ApiError && error.statusCode === 409) {
+        form.setError("title", {
+          type: "server",
+          message: error.message,
+        });
+      }
       toast.error(error instanceof Error ? error.message : "Failed to create course draft.");
     },
   });
@@ -180,6 +186,12 @@ export default function InstructorNewCoursePage() {
                       <Input
                         placeholder="e.g. Master NestJS Microservices"
                         {...field}
+                        onChange={(event) => {
+                          if (form.formState.errors.title?.type === "server") {
+                            form.clearErrors("title");
+                          }
+                          field.onChange(event);
+                        }}
                       />
                     </FormControl>
                     <FormDescription>

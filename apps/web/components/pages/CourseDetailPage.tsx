@@ -268,11 +268,11 @@ export default function CourseDetailPage({ slug }: { slug: string }) {
             <PartyPopper className="mt-0.5 h-6 w-6 shrink-0 text-emerald-600" />
             <div>
               <p className="font-heading text-base font-semibold text-emerald-900">
-                Thanh toán thành công!
+                Payment successful!
               </p>
               <p className="mt-0.5 text-sm text-emerald-800">
-                Bạn đã đăng ký khóa học này. Bắt đầu học ngay hoặc tiếp tục xem
-                thêm khóa khác.
+                You are now enrolled in this course. Start learning now or keep
+                exploring other courses.
               </p>
             </div>
           </div>
@@ -280,12 +280,12 @@ export default function CourseDetailPage({ slug }: { slug: string }) {
             <Link href={`/learn/${course.id}`}>
               <Button variant="hero" size="sm">
                 <PlayCircle className="mr-1.5 h-4 w-4" />
-                Bắt đầu học
+                Start learning
               </Button>
             </Link>
             <Link href="/courses">
               <Button variant="outline" size="sm">
-                Tiếp tục mua
+                Continue shopping
               </Button>
             </Link>
             <Button

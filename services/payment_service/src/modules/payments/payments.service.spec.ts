@@ -1,7 +1,7 @@
+/// <reference types="jest" />
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OrderStatus, PaymentMethod, PaymentStatus } from '../../common/prisma/prisma-client';
-import type { CurrentUserInterface } from '../../common/interfaces/current-user.interface';
 import type { PrismaService } from '../../common/prisma/prisma.service';
 import type { OrdersService } from '../orders/orders.service';
 import type { QueueService } from '../queue/queue.service';
@@ -60,12 +60,6 @@ describe('PaymentsService', () => {
     enqueuePaymentRefunded: jest.Mock;
   };
   let service: PaymentsService;
-
-  const currentUser: CurrentUserInterface = {
-    sub: 'user-1',
-    email: 'user@example.com',
-    roles: ['student'],
-  };
 
   beforeEach(() => {
     prisma = createPrismaMock();

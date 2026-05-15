@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import { buildPaginationMeta } from './pagination.util';
 
 describe('payment pagination util', () => {
